@@ -9,7 +9,7 @@
 
 
 
-#define VERSION "1.0"
+#define VERSION "1.1"
 
 
 
@@ -25,7 +25,7 @@ static struct class *temp_class = NULL;
 static struct device *temp_device = NULL;
 struct task_struct *monitor_task = NULL;
 
-static u32 uplimit = 105;
+static long uplimit = 105;
 static u32 debug = 0;
 
 
@@ -49,21 +49,21 @@ static ssize_t temp_store(struct device *dev, struct device_attribute *attr, con
 
 static ssize_t uplimit_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return snprintf(buf, PAGE_SIZE, "%u\n", uplimit);
+    return snprintf(buf, PAGE_SIZE, "%ld\n", uplimit);
 }
 static ssize_t uplimit_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
 {
-    unsigned long v = 0;
+    long v = 0;
 
-    if (kstrtoul(buf, 0, &v))
+    if (kstrtol(buf, 0, &v))
         return -EINVAL;
-    if ((0 == debug) && (v < 80))
+    if ((0 == debug) && (80 > v))
     {
         ERROR("uplimit cannot be lower than 80'C");
         return -EINVAL;
     }
     uplimit = v;
-    DEBUG("set uplimit to %u'C", uplimit);
+    DEBUG("set uplimit to %ld'C", uplimit);
 
     return size;
 }
@@ -146,7 +146,7 @@ int monitor_thread(void *data)
         if (uplimit < temp)
         {
             count++;
-            ERROR("current temp(%d) exceeds uplimit(%d) !", temp, uplimit);
+            ERROR("current temp(%d) exceeds uplimit(%ld) !", temp, uplimit);
             if (3 < count)
                 kernel_restart(NULL);
         }
